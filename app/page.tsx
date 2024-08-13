@@ -24,7 +24,7 @@ function Config(props: { cb: (data: any) => void }) {
           data[key] = value;
         });
 
-        console.log(data);
+        // console.log(data);
         cb && cb(data);
       });
     }
@@ -113,8 +113,6 @@ function Home() {
     if (opts?.group) {
       _GALLERY_GROUP = opts.group;
       _IMG_HOST = `https://raw.githubusercontent.com/fhvknb/raw-assets/master/${_GALLERY_GROUP}/`;
-
-      console.log("///");
     }
 
     fetchData();
