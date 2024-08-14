@@ -1,14 +1,16 @@
 "use client";
-import Image from "next/image";
+// import Image from "next/image";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import "viewerjs/dist/viewer.css";
 import Viewer from "viewerjs";
+import { getTargetUrl } from "@/utils";
 
-let _GALLERY_GROUP = "gt";
+let _DEF_GALLERY_GROUP = "gt";
 let _IMG_DURATION = 5000;
 
-let _IMG_HOST = `https://raw.githubusercontent.com/fhvknb/raw-assets/master/${_GALLERY_GROUP}/`;
+let _IMG_HOST = getTargetUrl("IMG", _DEF_GALLERY_GROUP);
+let _REQUEST_URL = getTargetUrl("DATA", _DEF_GALLERY_GROUP);
 
 function Config(props: { cb: (data: any) => void }) {
   const { cb } = props;
@@ -39,9 +41,10 @@ function Config(props: { cb: (data: any) => void }) {
             <input
               className="w-60 h-8 rounded
               indent-2
-              focus:outline-none focus:ring-2
-             focus:ring-indigo-500 
+              focus:outline-none focus:ring
+             focus:ring-2-indigo-500 
              focus:border-indigo-500
+             border-2 border-indigo-300 
             "
               name="group"
             />
@@ -51,7 +54,9 @@ function Config(props: { cb: (data: any) => void }) {
             <input
               className="w-60 h-8 rounded
               indent-2
-              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              focus:outline-none focus:ring focus:ring-2-indigo-500 focus:border-indigo-500
+              border-2 border-indigo-300 
+              "
               type="number"
               name="duration"
             />
@@ -76,10 +81,16 @@ function Home() {
   const galleryRef = useRef<Viewer | null>(null);
 
   const fetchData = async () => {
-    let _GALLERY_DATA = `https://raw.githubusercontent.com/fhvknb/raw-assets/master/json/${_GALLERY_GROUP}.json`;
+    const confData = localStorage.getItem("viewerConf");
+    let opts = confData && JSON.parse(confData);
+
+    if (opts?.group) {
+      _REQUEST_URL = getTargetUrl("DATA", opts.group);
+      _IMG_HOST = getTargetUrl("IMG", opts.group);
+    }
 
     try {
-      const resp = await fetch(_GALLERY_DATA);
+      const resp = await fetch(_REQUEST_URL);
       if (resp.status === 200) {
         const resData = await resp.json();
         setImgData(resData);
@@ -108,13 +119,6 @@ function Home() {
       return;
     }
 
-    const confData = localStorage.getItem("viewerConf");
-    let opts = confData && JSON.parse(confData);
-    if (opts?.group) {
-      _GALLERY_GROUP = opts.group;
-      _IMG_HOST = `https://raw.githubusercontent.com/fhvknb/raw-assets/master/${_GALLERY_GROUP}/`;
-    }
-
     fetchData();
   }, [imgData]);
 
@@ -140,7 +144,7 @@ function Home() {
         {imgData &&
           imgData.length > 0 &&
           imgData.map((item, idx) => (
-            <li className="w-48 h-48 m-2 " key={`img_${idx + 9}`}>
+            <li className="w-48 h-48 mt-2 ml-2" key={`img_${idx + 9}`}>
               <img
                 src={`${_IMG_HOST}${item.imgSrc}`}
                 className="w-full h-full object-cover rounded"
@@ -148,7 +152,7 @@ function Home() {
             </li>
           ))}
 
-        <li onClick={handleClickCount} className="w-48 h-48 m-2"></li>
+        <li onClick={handleClickCount} className="w-48 h-48 ml-2 mt-2"></li>
       </ul>
       {showConf && <Config cb={handleConfCb} />}
     </div>
