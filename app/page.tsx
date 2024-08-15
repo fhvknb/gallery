@@ -4,10 +4,13 @@ import { Suspense, useEffect, useRef, useState } from "react";
 
 import "viewerjs/dist/viewer.css";
 import Viewer from "viewerjs";
-import { getTargetUrl } from "@/utils";
+import { MD5 } from "crypto-js";
+import { getTargetUrl, setCookie, getLoginCookie } from "@/utils";
 
 let _DEF_GALLERY_GROUP = "gt";
 let _IMG_DURATION = 5000;
+
+let _LOGIN_HASH = "";
 
 let _IMG_HOST = getTargetUrl("IMG", _DEF_GALLERY_GROUP);
 let _REQUEST_URL = getTargetUrl("DATA", _DEF_GALLERY_GROUP);
@@ -73,10 +76,62 @@ function Config(props: { cb: (data: any) => void }) {
   );
 }
 
-function Home() {
+function Login(props: { cb: (data: any) => void }) {
+  const { cb } = props;
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    if (formRef.current) {
+      formRef.current.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data: Record<string, any> = {};
+        formData.forEach((value, key) => {
+          data[key] = value;
+        });
+
+        // console.log(data);
+        cb && cb(data);
+      });
+    }
+  }, []);
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className=" rounded bg-white p-4">
+        <form id="login_form" ref={formRef}>
+          <div className="pb-4 flex justify-between">
+            <div className="w-20 leading-8">Password:</div>
+            <input
+              className="w-60 h-8 rounded
+              indent-2
+              focus:outline-none focus:ring
+             focus:ring-2-indigo-500 
+             focus:border-indigo-500
+             border-2 border-indigo-300 
+            "
+              type="password"
+              name="password"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <button className="border-solid border-2 border-indigo-600 pl-4 pr-4 rounded">
+              Login
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Home(props: { isLogin: boolean }) {
+  const { isLogin = false } = props;
   const [imgData, setImgData] = useState<{ imgSrc: string }[]>([]);
   const [clickCount, setClickCount] = useState<number>(0);
   const [showConf, setShowConf] = useState<boolean>(false);
+  const [loginStatus, setLoginStatus] = useState<boolean>(isLogin);
 
   const galleryRef = useRef<Viewer | null>(null);
 
@@ -106,7 +161,7 @@ function Home() {
     }
     const confData = localStorage.getItem("viewerConf");
     let opts = confData && JSON.parse(confData);
-    console.log(opts);
+    // console.log(opts);
 
     galleryRef.current = new Viewer(document.getElementById("images")!, {
       interval: opts?.duration ? Number(opts.duration) : _IMG_DURATION,
@@ -114,12 +169,15 @@ function Home() {
   };
 
   useEffect(() => {
+    fetchData();
+
+    _LOGIN_HASH = "9eb3489a8d9e592694038d09830713cd";
+  }, []);
+
+  useEffect(() => {
     if (imgData.length) {
       initViewer();
-      return;
     }
-
-    fetchData();
   }, [imgData]);
 
   const handleClickCount = () => {
@@ -138,13 +196,25 @@ function Home() {
     }
   };
 
+  const handleLoginCb = (data: any) => {
+    setCookie("isLogin", "1", 1);
+    if (data && data.password) {
+      const hash = MD5(data.password).toString();
+      if (hash === _LOGIN_HASH) {
+        setLoginStatus(true);
+        initViewer();
+      }
+    }
+  };
+
   return (
     <div className="container min-w-fit  min-h-screen">
       <ul className="flex flex-wrap" id="images">
-        {imgData &&
+        {loginStatus &&
+          imgData &&
           imgData.length > 0 &&
           imgData.map((item, idx) => (
-            <li className="w-48 h-48 mt-2 ml-2" key={`img_${idx + 9}`}>
+            <li className="w-48 h-48 mt-2 ml-2 " key={`img_${idx + 9}`}>
               <img
                 src={`${_IMG_HOST}${item.imgSrc}`}
                 className="w-full h-full object-cover rounded"
@@ -155,14 +225,18 @@ function Home() {
         <li onClick={handleClickCount} className="w-48 h-48 ml-2 mt-2"></li>
       </ul>
       {showConf && <Config cb={handleConfCb} />}
+      {!loginStatus && <Login cb={handleLoginCb} />}
     </div>
   );
 }
 
 export default function Index() {
-  return (
-    <>
-      <Home />
-    </>
-  );
+  const [initialStatus, setInitialStatus] = useState<boolean>(false);
+  const [isLogin, setIsLogin] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsLogin(getLoginCookie());
+    setInitialStatus(true);
+  }, []);
+  return <>{initialStatus && <Home isLogin={isLogin} />}</>;
 }
