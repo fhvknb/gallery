@@ -23,3 +23,14 @@ export function deleteCookie(name: string) {
 export function getLoginCookie() {
   return document.cookie.includes("isLogin=1");
 }
+
+export function shuffleArray(arr: any[]) {
+  if (!arr || !arr.length) {
+    return [];
+  }
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}

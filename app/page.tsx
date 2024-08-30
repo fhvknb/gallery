@@ -5,12 +5,12 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import "viewerjs/dist/viewer.css";
 import Viewer from "viewerjs";
 import { MD5 } from "crypto-js";
-import { getTargetUrl, setCookie, getLoginCookie } from "@/utils";
+import { getTargetUrl, setCookie, getLoginCookie, shuffleArray } from "@/utils";
 
-let _DEF_GALLERY_GROUP = "gt";
+const _DEF_GALLERY_GROUP = "gt";
+const _LOGIN_HASH = "9eb3489a8d9e592694038d09830713cd";
+
 let _IMG_DURATION = 5000;
-
-let _LOGIN_HASH = "";
 
 let _IMG_HOST = getTargetUrl("IMG", _DEF_GALLERY_GROUP);
 let _REQUEST_URL = getTargetUrl("DATA", _DEF_GALLERY_GROUP);
@@ -55,11 +55,8 @@ function Config(props: { cb: (data: any) => void }) {
           <div className="pb-4 flex justify-between">
             <div className="w-20 leading-8">Duration:</div>
             <input
-              className="w-60 h-8 rounded
-              indent-2
-              focus:outline-none focus:ring focus:ring-2-indigo-500 focus:border-indigo-500
-              border-2 border-indigo-300 
-              "
+              className="w-60 h-8 rounded indent-2 border-2 border-indigo-300 
+              focus:outline-none focus:ring focus:ring-2-indigo-500 focus:border-indigo-500"
               type="number"
               name="duration"
             />
@@ -76,9 +73,11 @@ function Config(props: { cb: (data: any) => void }) {
   );
 }
 
-function Login(props: { cb: (data: any) => void }) {
+function Login(props: { cb: () => void }) {
   const { cb } = props;
   const formRef = useRef<HTMLFormElement | null>(null);
+
+  const [errmsg, setErrmsg] = useState<string>("");
 
   useEffect(() => {
     if (formRef.current) {
@@ -89,9 +88,18 @@ function Login(props: { cb: (data: any) => void }) {
         formData.forEach((value, key) => {
           data[key] = value;
         });
-
         // console.log(data);
-        cb && cb(data);
+        if (!data?.password) {
+          setErrmsg("密码不能为空");
+          return;
+        }
+
+        const hash = MD5(data.password).toString();
+        if (hash === _LOGIN_HASH) {
+          cb && cb();
+        } else {
+          setErrmsg("密码输入错误！Tip：'dwp toor spv'");
+        }
       });
     }
   }, []);
@@ -114,6 +122,9 @@ function Login(props: { cb: (data: any) => void }) {
               name="password"
             />
           </div>
+          {!!errmsg && (
+            <div className="text-sm text-rose-500 pb-4">{errmsg}</div>
+          )}
 
           <div className="flex justify-end">
             <button className="border-solid border-2 border-indigo-600 pl-4 pr-4 rounded">
@@ -148,7 +159,7 @@ function Home(props: { isLogin: boolean }) {
       const resp = await fetch(_REQUEST_URL);
       if (resp.status === 200) {
         const resData = await resp.json();
-        setImgData(resData);
+        setImgData(shuffleArray(resData));
       }
     } catch (err) {
       console.log(err);
@@ -169,14 +180,14 @@ function Home(props: { isLogin: boolean }) {
   };
 
   useEffect(() => {
-    fetchData();
-
-    _LOGIN_HASH = "9eb3489a8d9e592694038d09830713cd";
+    loginStatus && fetchData();
   }, []);
 
   useEffect(() => {
     if (imgData.length) {
-      initViewer();
+      setTimeout(() => {
+        initViewer();
+      }, 10);
     }
   }, [imgData]);
 
@@ -196,37 +207,35 @@ function Home(props: { isLogin: boolean }) {
     }
   };
 
-  const handleLoginCb = (data: any) => {
+  const handleLoginCb = () => {
     setCookie("isLogin", "1", 1);
-    if (data && data.password) {
-      const hash = MD5(data.password).toString();
-      if (hash === _LOGIN_HASH) {
-        setLoginStatus(true);
-        initViewer();
-      }
-    }
+    setLoginStatus(true);
+    fetchData();
   };
 
   return (
-    <div className="container min-w-fit  min-h-screen">
-      <ul className="flex flex-wrap" id="images">
-        {loginStatus &&
-          imgData &&
-          imgData.length > 0 &&
-          imgData.map((item, idx) => (
-            <li className="w-48 h-48 mt-2 ml-2 " key={`img_${idx + 9}`}>
-              <img
-                src={`${_IMG_HOST}${item.imgSrc}`}
-                className="w-full h-full object-cover rounded"
-              />
-            </li>
-          ))}
+    <>
+      {loginStatus && (
+        <div className="container min-w-fit  min-h-screen">
+          <ul className="flex flex-wrap" id="images">
+            {imgData &&
+              imgData.length > 0 &&
+              imgData.map((item, idx) => (
+                <li className="w-48 h-48 mt-2 ml-2 " key={`img_${idx + 9}`}>
+                  <img
+                    src={`${_IMG_HOST}${item.imgSrc}`}
+                    className="w-full h-full object-cover rounded"
+                  />
+                </li>
+              ))}
 
-        <li onClick={handleClickCount} className="w-48 h-48 ml-2 mt-2"></li>
-      </ul>
-      {showConf && <Config cb={handleConfCb} />}
+            <li onClick={handleClickCount} className="w-48 h-48 ml-2 mt-2"></li>
+          </ul>
+          {showConf && <Config cb={handleConfCb} />}
+        </div>
+      )}
       {!loginStatus && <Login cb={handleLoginCb} />}
-    </div>
+    </>
   );
 }
 
