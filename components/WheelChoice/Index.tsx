@@ -50,7 +50,7 @@ const WheelChoice = function (props: Props) {
   const [spinning, setSpinning] = useState<boolean>(false);
 
   const wheelRef = useRef<HTMLDivElement | null>(null);
-  const nextDegeree = useRef<number>(0);
+  const endDeg = useRef<number>(0);
 
   const sliceNum = choices.length;
 
@@ -58,6 +58,7 @@ const WheelChoice = function (props: Props) {
     const item: ReactNode[] = [];
     const degree = 360 / sliceNum;
     const calcDeg = 180 - degree;
+    if (!sliceNum) return;
     // console.log(calcDeg);
     if (calcDeg < 0) {
       return (
@@ -84,7 +85,7 @@ const WheelChoice = function (props: Props) {
             className="slice"
             key={`slice_k${i}`}
             style={{
-              transform: `translateY(-50%) rotate(${180 * i}deg)`,
+              transform: `translateY(-50%) rotate(-${180 * i}deg)`,
               backgroundColor: color,
               width: "100%",
               height: "100%",
@@ -106,7 +107,7 @@ const WheelChoice = function (props: Props) {
             className="slice"
             key={`slice_k${i}`}
             style={{
-              transform: `rotate(${degree * i}deg)`,
+              transform: `rotate(-${degree * i + degree / 2}deg)`,
               backgroundColor: color,
               width: 500,
               height: rectH * 2,
@@ -133,7 +134,7 @@ const WheelChoice = function (props: Props) {
             className="slice"
             key={`slice_k${i}`}
             style={{
-              transform: `rotate(${degree * i}deg)`,
+              transform: `rotate(-${degree * i + degree / 2}deg)`,
               backgroundColor: color,
               width: rectW * 2,
               height: 400,
@@ -157,7 +158,6 @@ const WheelChoice = function (props: Props) {
   };
 
   const getChoice = () => {
-    let totalWeight = 0;
     let awardIdx = [];
 
     for (let i = 0; i < sliceNum; i++) {
@@ -181,20 +181,19 @@ const WheelChoice = function (props: Props) {
 
   const calcTargetDegree = () => {
     const targetIdx = getChoice();
-    let addDeg = 360 * 2;
     const sliceDeg = 360 / sliceNum;
     const randomDeg = Math.random() * sliceDeg;
+    const preDeg = Math.floor(endDeg.current / 360) * 360;
+    const targetDeg = 360 * 2 + targetIdx * sliceDeg + randomDeg + preDeg;
 
-    const targetDeg = addDeg + (sliceDeg + sliceDeg * targetIdx);
+    // console.log(targetIdx);
+    // console.log(targetDeg);
 
-    console.log(targetIdx);
-    console.log(targetDeg);
-
-    return targetDeg;
+    return [targetIdx, targetDeg];
   };
 
   const spinWheel = () => {
-    const targetAngle = calcTargetDegree();
+    const [targetIdx, targetAngle] = calcTargetDegree();
 
     // return;
     if (!wheelRef.current) {
@@ -206,9 +205,12 @@ const WheelChoice = function (props: Props) {
 
     setTimeout(() => {
       setSpinning(false);
-      nextDegeree.current = targetAngle;
 
-      console.log("抽奖结束！");
+      endDeg.current = targetAngle;
+      window.alert(
+        `已为您自动选择任务--${choices[targetIdx].text}，去完成它吧！🏆🏆🏆`
+      );
+      //   console.log(`::::::成功命中（${choices[targetIdx].text}）号任务`);
     }, 3000);
   };
 
@@ -218,8 +220,6 @@ const WheelChoice = function (props: Props) {
     if (spinning) return;
     spinWheel();
   };
-
-  console.log("////");
 
   return (
     <div className="wheel-box">
@@ -234,7 +234,7 @@ const WheelChoice = function (props: Props) {
 
       <div
         className={`inline-block py-1.5 px-3.5 ${
-          spinning ? "bg-amber-300" : "bg-amber-600"
+          spinning ? "bg-amber-200" : "bg-amber-600"
         }   text-white rounded choice-btn `}
         onClick={choiceHander}
       >
