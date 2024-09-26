@@ -34,3 +34,35 @@ export function shuffleArray(arr: any[]) {
   }
   return arr;
 }
+
+export function genRandomIndex(length: number) {
+  const indexes = Array.from({ length }, (_, i) => i);
+  const randomIndexes = [];
+
+  while (indexes.length > 0) {
+    const randomIndex = Math.floor(Math.random() * indexes.length);
+    randomIndexes.push(indexes[randomIndex]);
+    indexes.splice(randomIndex, 1);
+  }
+
+  return randomIndexes;
+}
+
+export function degreeToRadian(degree: number) {
+  if (typeof degree !== "number") {
+    throw new Error("数据错误");
+  }
+  const _d = degree * (Math.PI / 180);
+
+  return Math.floor(_d * 100) / 100;
+}
+
+export function radianToDegree(radian: number) {
+  if (typeof radian !== "number") {
+    throw new Error("数据错误");
+  }
+
+  const _r = radian * (180 / Math.PI);
+
+  return Math.floor(_r * 100) / 100;
+}
