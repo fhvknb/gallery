@@ -61,23 +61,10 @@ const WheelChoice = function (props: Props) {
     if (!sliceNum) return;
     // console.log(calcDeg);
     if (calcDeg < 0) {
-      return (
-        <div>
-          <div
-            className="slice"
-            style={{
-              backgroundColor: COLORS[0],
-              width: "100%",
-              height: "100%",
-            }}
-          >
-            <div className="slice-inner" style={{ lineHeight: "400px" }}>
-              {choices[0].text}
-            </div>
-          </div>
-        </div>
-      );
-    } else if (calcDeg === 0) {
+      return item;
+    }
+
+    if (calcDeg === 0) {
       for (let i = 0; i < 2; i++) {
         const color = COLORS[i];
         item.push(
@@ -85,7 +72,7 @@ const WheelChoice = function (props: Props) {
             className="slice"
             key={`slice_k${i}`}
             style={{
-              transform: `translateY(-50%) rotate(-${180 * i}deg)`,
+              transform: `translateY(-50%) rotate(-${180 * i + 90}deg)`,
               backgroundColor: color,
               width: "100%",
               height: "100%",
@@ -169,13 +156,13 @@ const WheelChoice = function (props: Props) {
     shuffleArray(awardIdx);
     const target = Math.floor(Math.random() * awardIdx.length);
 
-    /* 概率测试 */
-    // if (shuffleIdx[target] === 1) {
-    //   _r.push(shuffleIdx[target]);
+    /* 概率测试 start */
+    // if (awardIdx[target] === 0) {
+    //   _r.push(awardIdx[target]);
     // }
     // _count += 1;
     // console.log(_r.length / _count);
-
+    /* 概率测试 end */
     return awardIdx[target];
   };
 
@@ -185,17 +172,19 @@ const WheelChoice = function (props: Props) {
     const randomDeg = Math.random() * sliceDeg;
     const preDeg = Math.floor(endDeg.current / 360) * 360;
     const targetDeg = 360 * 2 + targetIdx * sliceDeg + randomDeg + preDeg;
-
     // console.log(targetIdx);
     // console.log(targetDeg);
-
     return [targetIdx, targetDeg];
   };
 
   const spinWheel = () => {
     const [targetIdx, targetAngle] = calcTargetDegree();
 
+    // for (let i = 0; i < 100; i++) {
+    //   calcTargetDegree();
+    // }
     // return;
+
     if (!wheelRef.current) {
       return;
     }
@@ -207,10 +196,10 @@ const WheelChoice = function (props: Props) {
       setSpinning(false);
 
       endDeg.current = targetAngle;
-      window.alert(
-        `已为您自动选择任务--${choices[targetIdx].text}，去完成它吧！🏆🏆🏆`
-      );
-      //   console.log(`::::::成功命中（${choices[targetIdx].text}）号任务`);
+      // window.alert(
+      //   `已为您自动选择任务--${choices[targetIdx].text}，去完成它吧！🏆🏆🏆`
+      // );
+      console.log(`::::::成功命中（${choices[targetIdx].text}）号任务`);
     }, 3000);
   };
 
@@ -234,7 +223,9 @@ const WheelChoice = function (props: Props) {
 
       <div
         className={`inline-block py-1.5 px-3.5 ${
-          spinning ? "bg-amber-200" : "bg-amber-600"
+          spinning
+            ? "bg-amber-200 cursor-not-allowed"
+            : "bg-amber-600 cursor-pointer"
         }   text-white rounded choice-btn `}
         onClick={choiceHander}
       >
