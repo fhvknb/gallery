@@ -40,8 +40,9 @@ type Props = {
   choices: any[];
 };
 
-const _r = [];
-let _count = 0;
+const _test_target: any = [];
+// const _test_picks: any = [];
+let _test_count = 0;
 
 const WheelChoice = function (props: Props) {
   const { choices } = props;
@@ -51,8 +52,21 @@ const WheelChoice = function (props: Props) {
 
   const wheelRef = useRef<HTMLDivElement | null>(null);
   const endDeg = useRef<number>(0);
+  const shufleIdxRef = useRef<number[]>();
 
   const sliceNum = choices.length;
+
+  const _testProbablity = (target: number, times: number) => {
+    for (let i = 0; i < times; i++) {
+      const [pick, _] = calcTargetDegree();
+      if (pick === target) {
+        _test_target.push(pick);
+      }
+      _test_count += 1;
+
+      console.log(`(${target})::${_test_target.length / _test_count}`);
+    }
+  };
 
   const genSlice = () => {
     const item: ReactNode[] = [];
@@ -144,26 +158,87 @@ const WheelChoice = function (props: Props) {
     }
   };
 
-  const getChoice = () => {
-    let awardIdx = [];
+  const shuffleIndex1 = () => {
+    let allItem = 0;
+    const allItemArr = [];
 
     for (let i = 0; i < sliceNum; i++) {
       const w = choices[i].weight;
+      allItem += w;
+      const _idxArr = [];
+
       for (let j = 0; j < w; j++) {
-        awardIdx.push(i);
+        _idxArr.push(i);
+      }
+      allItemArr.push(_idxArr);
+    }
+    const minItems = Math.floor(allItem / sliceNum);
+
+    let pushCount = 0;
+    let pushItem = -1;
+    for (let m = 0; m < sliceNum; m++) {
+      const arr = allItemArr[m];
+      const l = arr.length;
+      if (l < minItems) {
+        for (let p = 0; p < minItems - l; p++) {
+          arr.push(-1);
+          pushCount += 1;
+        }
+      } else if (l > minItems) {
+        arr.splice(0, pushCount);
+        pushItem = arr[0];
       }
     }
-    shuffleArray(awardIdx);
-    const target = Math.floor(Math.random() * awardIdx.length);
+    const _resArr: number[][] = [];
 
-    /* 概率测试 start */
-    // if (awardIdx[target] === 0) {
-    //   _r.push(awardIdx[target]);
-    // }
-    // _count += 1;
-    // console.log(_r.length / _count);
-    /* 概率测试 end */
-    return awardIdx[target];
+    for (let i = 0; i < sliceNum; i++) {
+      const arr = allItemArr[i];
+      const l = arr.length;
+      for (let j = 0; j < l; j++) {
+        if (arr[j] < 0) {
+          arr[j] = pushItem;
+        }
+      }
+      _resArr.push(shuffleArray(arr));
+      // _resArr.push(arr);
+    }
+    shuffleArray(_resArr);
+    // console.log(_resArr);
+
+    return _resArr;
+  };
+
+  const shuffleIndex = () => {
+    const _arrItems = shuffleIndex1();
+    let _maxLen = 0;
+
+    for (let i = 0; i < sliceNum; i++) {
+      _maxLen = Math.max(_arrItems[i].length, _maxLen);
+    }
+
+    const shuffleArr: any[] = [];
+    for (let i = 0; i < _maxLen; i++) {
+      for (let j = 0; j < sliceNum; j++) {
+        const _len = _arrItems[j].length;
+
+        if (_len) {
+          shuffleArr.push(_arrItems[j][0]);
+          _arrItems[j].shift();
+        }
+      }
+    }
+    // console.log(shuffleArr);
+
+    return shuffleArr;
+  };
+
+  const getChoice = () => {
+    if (!shufleIdxRef.current) {
+      return -1;
+    }
+    const pick = Math.floor(Math.random() * shufleIdxRef.current.length);
+
+    return shufleIdxRef.current[pick];
   };
 
   const calcTargetDegree = () => {
@@ -174,32 +249,29 @@ const WheelChoice = function (props: Props) {
     const targetDeg = 360 * 2 + targetIdx * sliceDeg + randomDeg + preDeg;
     // console.log(targetIdx);
     // console.log(targetDeg);
+
     return [targetIdx, targetDeg];
   };
 
   const spinWheel = () => {
     const [targetIdx, targetAngle] = calcTargetDegree();
 
-    // for (let i = 0; i < 100; i++) {
-    //   calcTargetDegree();
-    // }
-    // return;
-
     if (!wheelRef.current) {
       return;
     }
 
     setSpinning(true);
+    wheelRef.current!.style.transition = `transform 3s cubic-bezier(0.2, 0.93, 0.43, 1)`;
     wheelRef.current!.style.transform = `rotate(${targetAngle}deg)`;
 
     setTimeout(() => {
       setSpinning(false);
 
       endDeg.current = targetAngle;
-      // window.alert(
-      //   `已为您自动选择任务--${choices[targetIdx].text}，去完成它吧！🏆🏆🏆`
-      // );
-      console.log(`::::::成功命中（${choices[targetIdx].text}）号任务`);
+      window.alert(
+        `已为您自动选择任务--${choices[targetIdx].text}，去完成它吧！🏆🏆🏆`
+      );
+      // console.log(`::::::成功命中（${choices[targetIdx].text}）号任务`);
     }, 3000);
   };
 
@@ -210,8 +282,24 @@ const WheelChoice = function (props: Props) {
     spinWheel();
   };
 
+  useEffect(() => {
+    if (choices.length) {
+      shufleIdxRef.current = shuffleIndex();
+      // console.log(shufleIdxRef.current);
+
+      wheelRef.current!.style.transition = `unset`;
+      wheelRef.current!.style.transform = `rotate(0deg)`;
+    }
+  }, [choices]);
+
+  useEffect(() => {
+    // setTimeout(() => {
+    //   _testProbablity(3, 100);
+    // }, 100);
+  }, []);
+
   return (
-    <div className="wheel-box">
+    <div className="scale-75 sm:scale-100 wheel-box">
       <div className="wheel" ref={wheelRef}>
         {genSlice()}
 

@@ -11,7 +11,6 @@
   /* background-color: bisque; */
   overflow: hidden;
   transform-origin: center;
-  transition: transform 3s cubic-bezier(0.2, 0.93, 0.43, 1);
 }
 
 .slice {
@@ -58,7 +57,7 @@
 
 .choice-btn {
   margin-top: 30px;
-  font-size: 14px;
+  font-size: 18px;
   z-index: 9;
   position: relative;
 }
