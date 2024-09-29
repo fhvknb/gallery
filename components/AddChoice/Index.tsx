@@ -107,13 +107,13 @@ const AddChoice = (props: PropsType) => {
       {data &&
         data.length > 0 &&
         data.map((item, idx) => (
-          <div className="flex mb-2" key={`itemadd_${idx + 1}`}>
+          <div className="w flex mb-2" key={`itemadd_${idx + 1}`}>
             <span>Name:</span>
             <input
               value={item.text}
               onChange={(e) => handleInputChange(e, idx, "name")}
               required
-              className="w-32 ml-2 pl-1 rounded border-violet-800 border focus:outline-none focus:ring focus:ring-violet-300 "
+              className="w-28 ml-2 pl-1 rounded border-violet-800 border focus:outline-none focus:ring focus:ring-violet-300 "
             />
             <span className="ml-4">Weight:</span>
             <input
@@ -121,7 +121,7 @@ const AddChoice = (props: PropsType) => {
               type="number"
               onChange={(e) => handleInputChange(e, idx, "weight")}
               required
-              className="w-32  ml-2 pl-1 rounded border-violet-800 border focus:outline-none focus:ring focus:ring-violet-300 "
+              className="w-16  ml-2 pl-1 rounded border-violet-800 border focus:outline-none focus:ring focus:ring-violet-300 "
             />
             <span
               onClick={() => handleDel(idx)}
