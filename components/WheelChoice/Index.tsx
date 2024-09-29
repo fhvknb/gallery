@@ -286,7 +286,8 @@ const WheelChoice = function (props: Props) {
     if (choices.length) {
       shufleIdxRef.current = shuffleIndex();
       // console.log(shufleIdxRef.current);
-
+      
+      endDeg.current = 0;
       wheelRef.current!.style.transition = `unset`;
       wheelRef.current!.style.transform = `rotate(0deg)`;
     }

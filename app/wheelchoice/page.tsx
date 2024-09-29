@@ -1,21 +1,12 @@
 "use client";
 
-import {
-  ChangeEvent,
-  ChangeEventHandler,
-  EventHandler,
-  ReactElement,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import WheelChoice from "@/components/WheelChoice/Index";
 import Modal from "@/components/Modals/Index";
 
 import "./page.css";
+import AddChoice from "@/components/AddChoice/Index";
 
 const _presetData = {
   play: [
@@ -47,28 +38,56 @@ const _presetData = {
       weight: 20,
     },
   ],
-  test: [
+  doLike: [
     {
-      text: "award-0",
+      text: "唱歌",
       icon: "icon",
-      weight: 10,
+      weight: 20,
     },
     {
-      text: "award-1",
+      text: "下棋",
       icon: "icon",
-      weight: 10,
+      weight: 20,
     },
     {
-      text: "award-2",
+      text: "玩游戏",
       icon: "icon",
-      weight: 10,
+      weight: 20,
     },
     {
-      text: "award-3",
+      text: "锻炼",
       icon: "icon",
-      weight: 10,
+      weight: 20,
+    },
+    {
+      text: "看书",
+      icon: "icon",
+      weight: 20,
     },
   ],
+  test: [
+    {
+      text: "Task One",
+      icon: "icon",
+      weight: 20,
+    },
+    {
+      text: "Task Two",
+      icon: "icon",
+      weight: 20,
+    },
+    {
+      text: "Task Three",
+      icon: "icon",
+      weight: 20,
+    },
+    {
+      text: "Task Four",
+      icon: "icon",
+      weight: 20,
+    },
+  ],
+  extra: [],
 };
 
 type ChoiceType = keyof typeof _presetData;
@@ -77,17 +96,32 @@ export default function Page() {
   const [data, setData] = useState<any[]>([]);
   const [open, setOpen] = useState<boolean>(false);
 
+  const [openAdd, setOpenAdd] = useState<boolean>(false);
+
   const handleSelect = (e: ChangeEvent<HTMLSelectElement>) => {
     // console.log(e.target.value);
 
     const type = e.target.value as ChoiceType;
 
-    setData(_presetData[type]);
+    if (type === "extra") {
+      const choices = localStorage.getItem("choices");
+      const _d = (choices && JSON.parse(choices)) || [];
+
+      if (_d.length > 1) {
+        setData(_d);
+      } else {
+        setData(_presetData["test"]);
+      }
+    } else {
+      setData(_presetData[type]);
+    }
+
     setOpen(false);
   };
 
   useEffect(() => {
     setData(_presetData["test"]);
+    // localStorage.setItem("choices", "");
   }, []);
 
   return (
@@ -99,6 +133,12 @@ export default function Page() {
             onClick={() => setOpen(true)}
           >
             Change Choice
+          </button>
+          <button
+            className="inline-block py-1.5 px-3.5 ml-4 text-white bg-blue-500 rounded mb-12"
+            onClick={() => setOpenAdd(true)}
+          >
+            Add Choice
           </button>
         </div>
         <WheelChoice choices={data} />
@@ -112,10 +152,16 @@ export default function Page() {
             onChange={handleSelect}
           >
             <option value="">--Please choose--</option>
-            <option value="doOrNot">Choice</option>
-            <option value="play">Play</option>
+            <option value="doOrNot">Choose Two</option>
+            <option value="play">Choose Play</option>
+            <option value="doLike">Choose Like</option>
+            <option value="extra">Choose Extra</option>
           </select>
         </div>
+      </Modal>
+
+      <Modal isOpen={openAdd} close={() => setOpenAdd(false)}>
+        <AddChoice cb={() => setOpenAdd(false)} />
       </Modal>
     </main>
   );
